@@ -11,8 +11,6 @@ export type ColorSchemePreference = 'system' | 'light' | 'dark';
 
 export type Settings = {
   colorScheme: ColorSchemePreference;
-  /** Draw a photo (or initials) on every card. */
-  showPortraits: boolean;
   /** Show birth/death years under each name on the canvas. */
   showLifespans: boolean;
 };
@@ -70,7 +68,6 @@ export type FamilyStore = State & Actions;
 
 const defaultSettings: Settings = {
   colorScheme: 'system',
-  showPortraits: true,
   showLifespans: true,
 };
 

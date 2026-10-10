@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 
 import { Avatar } from '@/components/Avatar';
 import { Button, IconButton } from '@/components/Button';
@@ -12,10 +13,11 @@ import { SegmentedControl, TextField } from '@/components/Field';
 import { Card, Divider, SectionHeader } from '@/components/Surface';
 import { AppText } from '@/components/Text';
 import { normalizeDateInput } from '@/lib/dates';
+import { createEvent } from '@/lib/story';
 import { fullName, parentsOf, partnersOf } from '@/lib/relations';
 import { useFamilyStore } from '@/store/familyStore';
 import { contentMaxWidth, useTheme } from '@/theme';
-import { unionKey, type Gender, type UnionStatus } from '@/types';
+import { unionKey, type Gender, type LifeEvent, type UnionStatus } from '@/types';
 
 const GENDERS: { value: Gender; label: string }[] = [
   { value: 'female', label: 'Female' },
@@ -72,6 +74,8 @@ export default function EditPersonScreen() {
   const [occupation, setOccupation] = useState(existing?.occupation ?? '');
   const [bio, setBio] = useState(existing?.bio ?? '');
   const [photoUri, setPhotoUri] = useState(existing?.photoUri ?? '');
+  const [photos, setPhotos] = useState<string[]>(existing?.photos ?? []);
+  const [events, setEvents] = useState<LifeEvent[]>(existing?.events ?? []);
   const [unlinkTarget, setUnlinkTarget] = useState<{ kind: 'parent' | 'partner'; id: string } | null>(null);
 
   const previewPerson = useMemo(
@@ -92,16 +96,25 @@ export default function EditPersonScreen() {
   const title = isNew ? (params.relation ? RELATION_TITLE[params.relation] : 'Add a person') : 'Edit person';
   const canSave = firstName.trim().length > 0;
 
-  async function pickPhoto() {
+  async function pickImages(onPicked: (uris: string[]) => void, square: boolean) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted && Platform.OS !== 'web') return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: square,
+      aspect: square ? [1, 1] : undefined,
+      allowsMultipleSelection: !square,
       quality: 0.7,
     });
-    if (!result.canceled && result.assets[0]) setPhotoUri(result.assets[0].uri);
+    if (!result.canceled && result.assets.length > 0) onPicked(result.assets.map((asset) => asset.uri));
+  }
+
+  const pickPhoto = () => pickImages((uris) => setPhotoUri(uris[0]), true);
+  const addToAlbum = () =>
+    pickImages((uris) => setPhotos((current) => [...current, ...uris.filter((uri) => !current.includes(uri))]), false);
+
+  function updateEvent(id: string, patch: Partial<LifeEvent>) {
+    setEvents((current) => current.map((event) => (event.id === id ? { ...event, ...patch } : event)));
   }
 
   function save() {
@@ -118,6 +131,15 @@ export default function EditPersonScreen() {
       occupation: occupation.trim() || undefined,
       bio: bio.trim() || undefined,
       photoUri: photoUri || undefined,
+      photos,
+      events: events
+        .filter((event) => event.title.trim().length > 0)
+        .map((event) => ({
+          ...event,
+          title: event.title.trim(),
+          date: event.date ? normalizeDateInput(event.date) : undefined,
+          place: event.place?.trim() || undefined,
+        })),
     };
 
     if (existing) {
@@ -297,6 +319,107 @@ export default function EditPersonScreen() {
           placeholder="A memory, a habit, the thing everybody says about them…"
           multiline
         />
+
+        <SectionHeader
+          title="Photographs"
+          action={
+            <Pressable accessibilityRole="button" accessibilityLabel="Add photographs" onPress={addToAlbum}>
+              <AppText variant="label" tone="accent">
+                Add
+              </AppText>
+            </Pressable>
+          }
+        />
+        {photos.length === 0 ? (
+          <AppText variant="caption" tone="faint">
+            Photographs show on the person&apos;s life canvas and in their album.
+          </AppText>
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {photos.map((uri) => (
+              <View
+                key={uri}
+                style={{ width: '31.8%', aspectRatio: 1.18, borderRadius: theme.radius.sm, overflow: 'hidden' }}>
+                <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove this photograph"
+                  onPress={() => setPhotos((current) => current.filter((item) => item !== uri))}
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme.colors.overlay,
+                  }}>
+                  <Icon name="close" size={12} color="#FFFFFF" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <SectionHeader
+          title="Moments"
+          action={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add a moment"
+              onPress={() =>
+                setEvents((current) => [...current, createEvent({ title: '', date: '', place: '' })])
+              }>
+              <AppText variant="label" tone="accent">
+                Add
+              </AppText>
+            </Pressable>
+          }
+        />
+        {events.length === 0 ? (
+          <AppText variant="caption" tone="faint">
+            Births and deaths come from the dates above. Anything else — a move, a marriage, a first job — goes here
+            and builds the timeline.
+          </AppText>
+        ) : null}
+        {events.map((event) => (
+          <Card key={event.id} style={{ gap: theme.space.md }}>
+            <View style={{ flexDirection: 'row', gap: theme.space.md }}>
+              <TextField
+                label="Year"
+                value={event.date ?? ''}
+                onChangeText={(value) => updateEvent(event.id, { date: value })}
+                placeholder="1961"
+                autoCapitalize="none"
+                style={{ flex: 1 }}
+              />
+              <TextField
+                label="Place"
+                value={event.place ?? ''}
+                onChangeText={(value) => updateEvent(event.id, { place: value })}
+                placeholder="Dubrovnik"
+                style={{ flex: 1.6 }}
+              />
+            </View>
+            <TextField
+              label="What happened"
+              value={event.title}
+              onChangeText={(value) => updateEvent(event.id, { title: value })}
+              placeholder="Moves to Dubrovnik, starts work"
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Remove this moment"
+              onPress={() => setEvents((current) => current.filter((item) => item.id !== event.id))}
+              style={{ alignSelf: 'flex-start' }}>
+              <AppText variant="label" tone="danger">
+                Remove
+              </AppText>
+            </Pressable>
+          </Card>
+        ))}
 
         {existing && (parents.length > 0 || partners.length > 0) ? (
           <>

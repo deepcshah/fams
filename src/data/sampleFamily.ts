@@ -1,4 +1,4 @@
-import type { FamilyTree, Gender, Person, Union, UnionStatus } from '../types';
+import type { FamilyTree, Gender, LifeEvent, Person, Union, UnionStatus } from '../types';
 
 /** Mirrors `unionKey` from ../types; kept local so this module stays import-free. */
 function keyFor(a: string, b: string): string {
@@ -18,6 +18,7 @@ type Seed = {
   occupation?: string;
   bio?: string;
   parentIds?: string[];
+  events?: Omit<LifeEvent, 'id'>[];
 };
 
 const SEEDS: Seed[] = [
@@ -32,6 +33,12 @@ const SEEDS: Seed[] = [
     birthPlace: 'Enugu, Nigeria',
     occupation: 'Railway engineer',
     bio: 'Kept a notebook of every bridge he ever worked on. The family archive starts with him.',
+    events: [
+      { date: '1949', title: 'Apprenticed to the Eastern Railway', place: 'Enugu' },
+      { date: '1954-01-16', title: 'Marries Amara Obi', place: 'Enugu' },
+      { date: '1963', title: 'Builds the Oji river bridge', place: 'Enugu' },
+      { date: '1971', title: 'Moves the family to Lagos', place: 'Lagos' },
+    ],
   },
   {
     id: 'p_amara',
@@ -44,6 +51,11 @@ const SEEDS: Seed[] = [
     birthPlace: 'Enugu, Nigeria',
     occupation: 'Schoolteacher',
     bio: 'Taught three generations of children in the same classroom.',
+    events: [
+      { date: '1952', title: 'Takes the schoolhouse on Ogui Road', place: 'Enugu' },
+      { date: '1971', title: 'Moves the family to Lagos', place: 'Lagos' },
+      { date: '1994', title: 'Hands the recipe book to Joan' },
+    ],
   },
   {
     id: 'p_walter',
@@ -54,6 +66,9 @@ const SEEDS: Seed[] = [
     deathDate: '2004-06-28',
     birthPlace: 'Leeds, England',
     occupation: 'Printer',
+    events: [
+      { date: '1948', title: 'Starts at the Hart & Sons press', place: 'Leeds' },
+    ],
   },
   {
     id: 'p_rosalind',
@@ -67,6 +82,11 @@ const SEEDS: Seed[] = [
     birthPlace: 'Leeds, England',
     occupation: 'Midwife',
     bio: 'Delivered over two thousand babies, including two of her own grandchildren.',
+    events: [
+      { date: '1955', title: 'Qualifies as a midwife', place: 'Leeds' },
+      { date: '1956-04-07', title: 'Marries Walter Hart', place: 'Leeds' },
+      { date: '1988', title: 'Delivers her own grandchildren', place: 'Manchester' },
+    ],
   },
 
   // Grandparents
@@ -79,6 +99,11 @@ const SEEDS: Seed[] = [
     birthPlace: 'Lagos, Nigeria',
     occupation: 'Civil engineer',
     parentIds: ['p_emeka', 'p_amara'],
+    events: [
+      { date: '1979', title: 'Reads engineering at Manchester', place: 'Manchester' },
+      { date: '1983-05-21', title: 'Marries Joan Hart', place: 'Leeds' },
+      { date: '1996', title: 'Builds the Salford footbridge', place: 'Manchester' },
+    ],
   },
   {
     id: 'p_ifeoma',
@@ -90,6 +115,11 @@ const SEEDS: Seed[] = [
     birthPlace: 'Lagos, Nigeria',
     occupation: 'Pharmacist',
     parentIds: ['p_emeka', 'p_amara'],
+    events: [
+      { date: '1984', title: 'Meets Tomás at a guitar recital', place: 'Seville' },
+      { date: '1986-09-13', title: 'Marries Tomás Rivera', place: 'Seville' },
+      { date: '1990', title: 'Opens the pharmacy on Calle Feria', place: 'Seville' },
+    ],
   },
   {
     id: 'p_joan',
@@ -102,6 +132,11 @@ const SEEDS: Seed[] = [
     occupation: 'Archivist',
     bio: 'Started this family tree on index cards in 1994.',
     parentIds: ['p_walter', 'p_rosalind'],
+    events: [
+      { date: '1981', title: 'Joins the county archive', place: 'Manchester' },
+      { date: '1994', title: 'Starts the family tree on index cards' },
+      { date: '2012', title: 'Digitises four shoeboxes of photographs' },
+    ],
   },
   {
     id: 'p_peter',
@@ -112,6 +147,10 @@ const SEEDS: Seed[] = [
     birthPlace: 'Leeds, England',
     occupation: 'Chef',
     parentIds: ['p_walter', 'p_rosalind'],
+    events: [
+      { date: '1985', title: 'Trains at the Lowry kitchens', place: 'Manchester' },
+      { date: '1999', title: 'Opens a restaurant', place: 'Bristol' },
+    ],
   },
   {
     id: 'p_tomas',
@@ -121,6 +160,10 @@ const SEEDS: Seed[] = [
     birthDate: '1958-02-09',
     birthPlace: 'Seville, Spain',
     occupation: 'Luthier',
+    events: [
+      { date: '1978', title: 'Apprentices to a luthier', place: 'Seville' },
+      { date: '2004', title: 'Builds a guitar for each grandchild' },
+    ],
   },
   {
     id: 'p_lena',
@@ -131,6 +174,10 @@ const SEEDS: Seed[] = [
     birthDate: '1965-06-17',
     birthPlace: 'Freiburg, Germany',
     occupation: 'Botanist',
+    events: [
+      { date: '1989', title: 'Doctorate in alpine botany', place: 'Freiburg' },
+      { date: '2003', title: 'Plants the garden at Clifton', place: 'Bristol' },
+    ],
   },
 
   // Parents
@@ -146,6 +193,11 @@ const SEEDS: Seed[] = [
     occupation: 'Paediatrician',
     bio: 'Keeper of the family recipes and the only one who can read great-grandma Amara’s handwriting.',
     parentIds: ['p_chidi', 'p_joan'],
+    events: [
+      { date: '2009', title: 'Qualifies in paediatrics', place: 'London' },
+      { date: '2010-07-24', title: 'Marries Samuel Okafor', place: 'London' },
+      { date: '2018', title: 'Cooks the whole Christmas from Amara’s book' },
+    ],
   },
   {
     id: 'p_daniel',
@@ -156,6 +208,10 @@ const SEEDS: Seed[] = [
     birthPlace: 'Manchester, England',
     occupation: 'Sound engineer',
     parentIds: ['p_chidi', 'p_joan'],
+    events: [
+      { date: '2011', title: 'Builds a studio in the attic', place: 'Bristol' },
+      { date: '2017', title: 'Meets Mei Lin on a film shoot', place: 'Penang' },
+    ],
   },
   {
     id: 'p_samuel',
@@ -165,6 +221,10 @@ const SEEDS: Seed[] = [
     birthDate: '1983-11-30',
     birthPlace: 'Abuja, Nigeria',
     occupation: 'Architect',
+    events: [
+      { date: '2007', title: 'Qualifies as an architect', place: 'Abuja' },
+      { date: '2013', title: 'Moves the practice to London', place: 'London' },
+    ],
   },
   {
     id: 'p_mei',
@@ -184,6 +244,10 @@ const SEEDS: Seed[] = [
     birthPlace: 'Seville, Spain',
     occupation: 'Marine biologist',
     parentIds: ['p_tomas', 'p_ifeoma'],
+    events: [
+      { date: '2014', title: 'First season on the research vessel', place: 'Cádiz' },
+      { date: '2021', title: 'Publishes on Mediterranean seagrass' },
+    ],
   },
   {
     id: 'p_marco',
@@ -205,6 +269,10 @@ const SEEDS: Seed[] = [
     occupation: 'Software engineer',
     bio: 'Rebuilt the family tree as an app after one too many arguments at Christmas.',
     parentIds: ['p_peter', 'p_lena'],
+    events: [
+      { date: '2016', title: 'First engineering job', place: 'Bristol' },
+      { date: '2024', title: 'Rebuilds the family tree as an app' },
+    ],
   },
 
   // Children
@@ -255,6 +323,7 @@ export function createSampleTree(now = Date.now()): FamilyTree {
       ...seed,
       parentIds: seed.parentIds ?? [],
       partnerIds: [],
+      events: (seed.events ?? []).map((event, index) => ({ ...event, id: `${seed.id}_e${index}` })),
       createdAt: now,
       updatedAt: now,
     };

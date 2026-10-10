@@ -7,19 +7,21 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useFamilyStore } from '@/store/familyStore';
-import { ThemeProvider, useTheme } from '@/theme';
+import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function Navigator() {
   const theme = useTheme();
   const hydrated = useFamilyStore((state) => state.hydrated);
+  const fontsReady = useAppFonts();
+  const ready = hydrated && fontsReady;
 
   useEffect(() => {
-    if (hydrated) SplashScreen.hideAsync().catch(() => {});
-  }, [hydrated]);
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
-  if (!hydrated) {
+  if (!ready) {
     return <View style={{ flex: 1, backgroundColor: theme.colors.bg }} />;
   }
 
@@ -34,6 +36,7 @@ function Navigator() {
         }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="person/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="life/[id]" options={{ presentation: 'card', animation: 'fade' }} />
         <Stack.Screen name="edit/[id]" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
     </>

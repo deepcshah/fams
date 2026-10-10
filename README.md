@@ -3,22 +3,36 @@
 A family tree app for web, iOS and Android, built with Expo and React Native.
 
 Most family tree software is a database with a diagram bolted on. Fams starts
-from the diagram: an interactive canvas you can pan, pinch and collapse, with
-everything else — profiles, editing, search — arranged around it.
+from the diagram, and treats the archive as the point: photographs are the
+cards, names and dates are set in letterspaced monospace, and the only colour
+on the page is the one in the pictures.
+
+There are two canvases. The tree answers **who** — generations, couples,
+branches you can collapse. A person's life canvas answers **what happened** —
+their photographs, places and moments strewn around a portrait.
 
 <p align="center">
-  <img src="docs/screenshot-tree.png" alt="The tree canvas on the web" width="720">
+  <img src="docs/screenshot-tree.png" alt="The family tree canvas" width="760">
 </p>
 <p align="center">
-  <img src="docs/screenshot-profile.png" alt="A person profile" width="352">
-  <img src="docs/screenshot-mobile.png" alt="The canvas on a phone, dark theme" width="180">
+  <img src="docs/screenshot-life.png" alt="A person's life canvas" width="376">
+  <img src="docs/screenshot-panel.png" alt="The person detail panel" width="376">
+</p>
+<p align="center">
+  <img src="docs/screenshot-dark.png" alt="The tree in the dark theme" width="760">
 </p>
 
 ## What it does
 
-- **An interactive canvas.** Pan and pinch on device; scroll to pan and
-  ⌘/Ctrl-scroll to zoom on the web. Double-tap toggles between overview and
-  detail. Tap a card for a preview, or jump straight to a full profile.
+- **Two canvases, one interaction.** Pan and pinch on device; scroll to pan and
+  ⌘/Ctrl-scroll to zoom on the web. Double-tap toggles overview and detail, and
+  a zoom register sits bottom-left with a Fit button.
+- **A life canvas per person.** Their photographs, the places they lived and the
+  moments they are remembered for, scattered around a portrait — stable,
+  overlap-free, and generated from the record rather than hand-arranged.
+- **A detail panel** that docks to the right on desktop and becomes a sheet on a
+  phone: family with relationships and dates, the album, and a timeline that
+  brackets recorded moments with birth and death.
 - **A layout that holds up.** Generation rows, couples drawn side by side,
   parents centred over their children, and sibling bars staggered so two
   families in the same row never merge into one line. It handles people who
@@ -34,6 +48,9 @@ everything else — profiles, editing, search — arranged around it.
   lifespans and birthday countdowns degrade to whatever precision is known.
 - **Insights.** Generation depth, couples, upcoming birthdays, longest life,
   surname distribution.
+- **Abstract place tiles.** Real cartography needs a tile server and a key; what
+  the eye wants is "somewhere on a coast", so each place generates its own
+  coastline deterministically from its name.
 - **Your data stays yours.** Everything is stored on the device. Export is plain
   JSON, and import accepts it back.
 
@@ -66,10 +83,13 @@ src/
   app/               expo-router routes
     (tabs)/          tree · people · insights · settings
     person/[id]      profile
+    life/[id]        the life canvas
     edit/[id]        create and edit ("new" creates)
   components/        UI primitives, sheets, and the tree canvas
   lib/
     layout.ts        the tree layout engine
+    scatter.ts       the life-canvas scatter engine
+    story.ts         timelines, albums and places derived from a person
     relations.ts     derived family relationships and kinship naming
     dates.ts         partial-date parsing, ages, lifespans
     transfer.ts      JSON import and export
@@ -100,6 +120,14 @@ A family tree is a DAG rather than a tree — two parents per child, people who
 marry in — so the traversal tracks what has already been placed and gives any
 unreachable couple its own slot.
 
+### The scatter engine
+
+`src/lib/scatter.ts` arranges a life canvas. Cards are tried along a golden
+spiral at growing radii and the first slot that collides with nothing wins, so
+the result looks strewn across a table but never overlaps. Positions are seeded
+from each card's id, which means the same life always lays out the same way —
+the arrangement becomes something you can remember your way around.
+
 ### Data model
 
 A `Person` carries `parentIds` and `partnerIds`; unions (married, partners,
@@ -107,7 +135,16 @@ divorced, …) are stored separately and keyed by the two partner ids. Everythin
 else is derived, which keeps edits local: adding a child never has to rewrite a
 family record.
 
+### Design language
+
+Near-monochrome paper grey, a single muted sage for anything actionable, and
+IBM Plex Mono in letterspaced uppercase for every name, date and section label.
+Cards are the photograph itself; somebody with no photograph gets a pale card
+with their initials, so the gaps in an archive are visible rather than papered
+over. Connectors are unrounded hairlines, and generations are separated by
+stripes you feel more than see.
+
 ## Built with
 
 Expo SDK 57 · React Native 0.86 · expo-router · react-native-reanimated ·
-react-native-gesture-handler · react-native-svg · zustand
+react-native-gesture-handler · react-native-svg · zustand · IBM Plex Mono

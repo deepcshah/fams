@@ -1,13 +1,12 @@
 import { memo } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 
-import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
-import { shadow } from '@/components/Surface';
 import { AppText } from '@/components/Text';
 import { lifespan } from '@/lib/dates';
-import { fullName } from '@/lib/relations';
-import type { LayoutNode } from '@/lib/layout';
+import { CAPTION_H, PORTRAIT_H, PORTRAIT_W, type LayoutNode } from '@/lib/layout';
+import { fullName, initialsOf } from '@/lib/relations';
 import { useTheme } from '@/theme';
 import type { Person } from '@/types';
 
@@ -19,7 +18,6 @@ export type PersonNodeProps = {
   selected: boolean;
   isHome: boolean;
   dimmed: boolean;
-  showPortraits: boolean;
   showLifespans: boolean;
   onPress: (personId: string) => void;
   onLongPress: (personId: string) => void;
@@ -33,14 +31,13 @@ function PersonNodeBase({
   selected,
   isHome,
   dimmed,
-  showPortraits,
   showLifespans,
   onPress,
   onLongPress,
 }: PersonNodeProps) {
   const theme = useTheme();
-  const ribbon = theme.generationColor(node.generation);
   const years = showLifespans ? lifespan(person.birthDate, person.deathDate) : '';
+  const hasPhoto = Boolean(person.photoUri);
 
   return (
     <Pressable
@@ -50,76 +47,91 @@ function PersonNodeBase({
       onPress={() => onPress(person.id)}
       onLongPress={() => onLongPress(person.id)}
       delayLongPress={280}
-      style={({ pressed }) => [
-        {
-          position: 'absolute',
-          left,
-          top,
-          width: node.width,
-          height: node.height,
-          borderRadius: theme.radius.lg,
-          backgroundColor: theme.colors.surface,
-          borderWidth: selected ? 2 : 1,
-          borderColor: selected ? theme.colors.accent : theme.colors.border,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingLeft: 12,
-          paddingRight: 12,
-          gap: 10,
-          opacity: dimmed ? 0.34 : 1,
-          transform: [{ scale: pressed ? 0.97 : 1 }],
-          overflow: 'hidden',
-        },
-        shadow(theme.colors.shadow, selected ? 2 : 1),
-      ]}>
+      style={({ pressed }) => ({
+        position: 'absolute',
+        left,
+        top,
+        width: node.width,
+        height: node.height,
+        opacity: dimmed ? 0.26 : 1,
+        transform: [{ scale: pressed ? 0.97 : 1 }],
+      })}>
       <View
         style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 4,
-          backgroundColor: ribbon,
-          opacity: person.deathDate ? 0.55 : 1,
-        }}
-      />
+          width: PORTRAIT_W,
+          height: PORTRAIT_H,
+          borderRadius: theme.radius.sm,
+          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+          // A photograph needs no frame; a gap in the archive is drawn as a
+          // pale card so the people who were photographed carry the page.
+          backgroundColor: hasPhoto ? theme.colors.surfaceSunken : theme.colors.surface,
+          borderWidth: hasPhoto ? 0 : StyleSheet.hairlineWidth * 2,
+          borderColor: theme.colors.border,
+          shadowColor: theme.colors.shadow,
+          shadowOpacity: hasPhoto ? 0.14 : 0,
+          shadowRadius: 7,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: hasPhoto ? 3 : 0,
+        }}>
+        {hasPhoto ? (
+          <Image
+            source={{ uri: person.photoUri }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+            transition={160}
+          />
+        ) : (
+          <AppText variant="nameLG" tone="faint" style={{ letterSpacing: 2 }}>
+            {initialsOf(person)}
+          </AppText>
+        )}
 
-      {showPortraits ? (
-        <Avatar
-          person={person}
-          size={36}
-          ring={isHome ? theme.colors.accent : undefined}
-          style={{ marginLeft: 2 }}
-        />
-      ) : null}
+        {selected ? (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              borderRadius: theme.radius.sm,
+              borderWidth: 2,
+              borderColor: theme.colors.text,
+            }}
+            pointerEvents="none"
+          />
+        ) : null}
 
-      <View style={{ flex: 1, gap: 2 }}>
-        <AppText variant="bodyStrong" numberOfLines={2} style={{ fontSize: 14, lineHeight: 17 }}>
+        {isHome ? (
+          <View
+            style={{
+              position: 'absolute',
+              top: 5,
+              right: 5,
+              width: 13,
+              height: 13,
+              borderRadius: 7,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.colors.accent,
+            }}>
+            <Icon name="star" size={7.5} color={theme.colors.accentText} strokeWidth={2.4} />
+          </View>
+        ) : null}
+      </View>
+
+      <View style={{ height: CAPTION_H, paddingTop: 7, gap: 1 }}>
+        <AppText variant="nameSM" numberOfLines={2}>
           {fullName(person)}
         </AppText>
         {years ? (
-          <AppText variant="caption" tone="muted" numberOfLines={1} style={{ fontSize: 11 }}>
+          <AppText variant="dataSM" tone="faint" numberOfLines={1}>
             {years}
           </AppText>
         ) : null}
       </View>
-
-      {isHome ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: 6,
-            right: 6,
-            width: 18,
-            height: 18,
-            borderRadius: 9,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme.colors.accentSoft,
-          }}>
-          <Icon name="star" size={11} color={theme.colors.accent} />
-        </View>
-      ) : null}
     </Pressable>
   );
 }

@@ -72,7 +72,7 @@ export default function SettingsScreen() {
       }}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
-      <AppText variant="display">Settings</AppText>
+      <AppText variant="nameLG">Settings</AppText>
 
       <SectionHeader title="This tree" />
       <Card style={{ gap: theme.space.lg }}>
@@ -116,13 +116,6 @@ export default function SettingsScreen() {
         </View>
         <Divider inset={theme.space.lg} />
         <ToggleRow
-          title="Portraits on cards"
-          subtitle="Show photos and initials in the tree"
-          value={settings.showPortraits}
-          onChange={(value) => updateSettings({ showPortraits: value })}
-        />
-        <Divider inset={theme.space.lg} />
-        <ToggleRow
           title="Years on cards"
           subtitle="Show birth and death years under each name"
           value={settings.showLifespans}
@@ -163,7 +156,7 @@ export default function SettingsScreen() {
 
       {status ? (
         <Card style={{ marginTop: theme.space.md, flexDirection: 'row', alignItems: 'center', gap: theme.space.md }}>
-          <Icon name="info" size={18} color={theme.colors.sage} />
+          <Icon name="info" size={18} color={theme.colors.accent} />
           <AppText variant="caption" tone="muted" style={{ flex: 1 }}>
             {status}
           </AppText>

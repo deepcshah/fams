@@ -47,7 +47,7 @@ export function PersonListItem({
           {fullName(person)}
         </AppText>
         {detail ? (
-          <AppText variant="caption" tone="muted" numberOfLines={1}>
+          <AppText variant="relation" tone="faint" numberOfLines={1}>
             {detail}
           </AppText>
         ) : null}

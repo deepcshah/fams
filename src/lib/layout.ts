@@ -13,14 +13,18 @@
 
 import type { Person, Union } from '../types';
 
-export const NODE_W = 186;
-export const NODE_H = 96;
-/** Gap between two partners inside the same unit. */
-export const COUPLE_GAP = 16;
+/** Cards are portraits: a photograph with its caption set beneath it. */
+export const PORTRAIT_W = 104;
+export const PORTRAIT_H = 128;
+export const CAPTION_H = 38;
+export const NODE_W = PORTRAIT_W;
+export const NODE_H = PORTRAIT_H + CAPTION_H;
+/** Partners sit almost touching; the tight gap is what reads as a couple. */
+export const COUPLE_GAP = 10;
 /** Gap between neighbouring units in the same generation row. */
-export const UNIT_GAP = 34;
+export const UNIT_GAP = 46;
 /** Vertical gap between generation rows. */
-export const ROW_GAP = 84;
+export const ROW_GAP = 74;
 export const ROW_H = NODE_H + ROW_GAP;
 
 export type LayoutNode = {
@@ -206,21 +210,16 @@ function unitWidth(unit: Unit): number {
   return unit.memberIds.length * NODE_W + (unit.memberIds.length - 1) * COUPLE_GAP;
 }
 
-/** Rounded elbow from a couple's drop point down to one child's top edge. */
+/**
+ * Square elbow from a couple's drop point down to one child's top edge. The
+ * corners are deliberately unrounded — at a hairline weight the right angles
+ * read as draughtsmanship rather than as a flowchart.
+ */
 function elbowPath(fromX: number, fromY: number, busY: number, toX: number, toY: number): string {
   if (Math.abs(toX - fromX) < 0.5) {
     return `M ${fromX} ${fromY} L ${toX} ${toY}`;
   }
-  const dir = toX > fromX ? 1 : -1;
-  const r = Math.min(14, Math.abs(toX - fromX) / 2, Math.abs(busY - fromY), Math.abs(toY - busY));
-  return [
-    `M ${fromX} ${fromY}`,
-    `L ${fromX} ${busY - r}`,
-    `Q ${fromX} ${busY} ${fromX + dir * r} ${busY}`,
-    `L ${toX - dir * r} ${busY}`,
-    `Q ${toX} ${busY} ${toX} ${busY + r}`,
-    `L ${toX} ${toY}`,
-  ].join(' ');
+  return `M ${fromX} ${fromY} L ${fromX} ${busY} L ${toX} ${busY} L ${toX} ${toY}`;
 }
 
 export function layoutFamilyTree(people: Person[], options: LayoutOptions = {}): TreeLayout {
@@ -465,10 +464,12 @@ export function layoutFamilyTree(people: Person[], options: LayoutOptions = {}):
         kind: 'partner',
         unionKey: key,
         status: unions[key]?.status,
+        // Centred on the photograph, not the whole card, so the tie between
+        // partners lines up with their faces rather than their captions.
         x1: a.x + a.width,
-        y1: a.y + a.height / 2,
+        y1: a.y + PORTRAIT_H / 2,
         x2: b.x,
-        y2: b.y + b.height / 2,
+        y2: b.y + PORTRAIT_H / 2,
       });
     }
   }

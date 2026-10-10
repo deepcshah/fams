@@ -95,7 +95,7 @@ export default function PeopleScreen() {
           maxWidth: contentMaxWidth,
         }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <AppText variant="display">People</AppText>
+          <AppText variant="nameLG">People</AppText>
           <IconButton
             icon="plus"
             label="Add a person"
@@ -172,7 +172,7 @@ export default function PeopleScreen() {
         }
         renderSectionHeader={({ section }) => (
           <View style={{ paddingHorizontal: theme.space.md, paddingTop: theme.space.lg, paddingBottom: theme.space.xs }}>
-            <AppText variant="overline" tone="faint">
+            <AppText variant="sectionLabel" tone="faint">
               {section.title.toUpperCase()}
             </AppText>
           </View>
@@ -181,7 +181,7 @@ export default function PeopleScreen() {
         renderItem={({ item }) => (
           <PersonListItem
             person={item}
-            subtitle={homeId && homeId !== item.id ? `Your ${kinshipLabel(people, homeId, item.id)}` : undefined}
+            subtitle={homeId && homeId !== item.id ? kinshipLabel(people, homeId, item.id) : undefined}
             trailing="chevron"
             selected={homeId === item.id}
             onPress={() => router.push({ pathname: '/person/[id]', params: { id: item.id } })}

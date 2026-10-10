@@ -30,7 +30,7 @@ function StatTile({ icon, value, label }: { icon: IconName; value: string; label
         }}>
         <Icon name={icon} size={16} color={theme.colors.accent} />
       </View>
-      <AppText variant="display" style={{ fontSize: 26, lineHeight: 30 }}>
+      <AppText variant="display" style={{ fontSize: 25, lineHeight: 30 }}>
         {value}
       </AppText>
       <AppText variant="caption" tone="muted">
@@ -92,8 +92,8 @@ export default function InsightsScreen() {
         maxWidth: contentMaxWidth,
       }}
       showsVerticalScrollIndicator={false}>
-      <AppText variant="display">Insights</AppText>
-      <AppText variant="body" tone="muted" style={{ marginTop: 2 }}>
+      <AppText variant="nameLG">Insights</AppText>
+      <AppText variant="caption" tone="faint" style={{ marginTop: 4 }}>
         {treeName}
       </AppText>
 
@@ -139,8 +139,8 @@ export default function InsightsScreen() {
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space.md }}>
                 <Avatar person={stats.oldestLiving.person} size={48} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <AppText variant="caption" tone="faint">
-                    OLDEST LIVING
+                  <AppText variant="sectionLabel" tone="faint">
+                    Oldest living
                   </AppText>
                   <AppText variant="bodyStrong">{fullName(stats.oldestLiving.person)}</AppText>
                   <AppText variant="caption" tone="muted">
@@ -153,8 +153,8 @@ export default function InsightsScreen() {
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space.md }}>
                 <Avatar person={stats.longestLife.person} size={48} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <AppText variant="caption" tone="faint">
-                    LONGEST LIFE
+                  <AppText variant="sectionLabel" tone="faint">
+                    Longest life
                   </AppText>
                   <AppText variant="bodyStrong">{fullName(stats.longestLife.person)}</AppText>
                   <AppText variant="caption" tone="muted">

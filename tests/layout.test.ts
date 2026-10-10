@@ -218,3 +218,21 @@ test('collapsing a couple whose branch is fully shared is a no-op', () => {
   assert.equal(collapsed.unitById[unitId].collapsed, false);
   assert.equal(collapsed.nodes.length, people.length);
 });
+
+test('partner links are centred on the photograph, not the whole card', () => {
+  const layout = layoutFamilyTree(couple('a', 'b'));
+  const link = layout.partnerLinks[0];
+  assert.equal(link.y1, link.y2);
+  assert.ok(link.y1 < layout.nodeById.a.y + layout.nodeById.a.height / 2, 'sits above the card centre');
+});
+
+test('descent links are square elbows, never curves', () => {
+  const people = [
+    ...couple('mum', 'dad'),
+    person('kid1', { parentIds: ['mum', 'dad'] }),
+    person('kid2', { parentIds: ['mum', 'dad'] }),
+  ];
+  for (const link of layoutFamilyTree(people).descentLinks) {
+    assert.ok(!/[QCA]/.test(link.path), `expected no curve commands in ${link.path}`);
+  }
+});

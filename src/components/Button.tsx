@@ -115,14 +115,14 @@ export function IconButton({
   const background = active
     ? theme.colors.accentSoft
     : variant === 'primary'
-      ? theme.colors.accent
+      ? theme.colors.text
       : variant === 'ghost'
         ? 'transparent'
         : theme.colors.surface;
   const foreground = active
     ? theme.colors.accent
     : variant === 'primary'
-      ? theme.colors.accentText
+      ? theme.colors.bg
       : theme.colors.text;
 
   return (
@@ -159,17 +159,15 @@ export function Chip({
   icon,
   selected,
   onPress,
-  tone = 'default',
 }: {
   label: string;
   icon?: IconName;
   selected?: boolean;
   onPress?: () => void;
-  tone?: 'default' | 'accent' | 'sage';
 }) {
   const theme = useTheme();
-  const accent = tone === 'sage' ? theme.colors.sage : theme.colors.accent;
-  const softAccent = tone === 'sage' ? theme.colors.sageSoft : theme.colors.accentSoft;
+  const accent = theme.colors.accent;
+  const softAccent = theme.colors.accentSoft;
   const Wrapper = onPress ? Pressable : View;
 
   return (

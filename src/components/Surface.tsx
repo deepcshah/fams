@@ -53,7 +53,7 @@ export function SectionHeader({ title, action }: { title: string; action?: React
         marginBottom: theme.space.sm,
         marginTop: theme.space.xl,
       }}>
-      <AppText variant="overline" tone="faint" style={{ textTransform: 'uppercase' }}>
+      <AppText variant="sectionLabel" tone="faint">
         {title}
       </AppText>
       {action}

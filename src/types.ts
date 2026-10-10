@@ -2,6 +2,15 @@
 
 export type Gender = 'female' | 'male' | 'other';
 
+/** A dated moment in someone's life, shown on their timeline and canvas. */
+export type LifeEvent = {
+  id: string;
+  /** Partial ISO dates are allowed, same as everywhere else. */
+  date?: string;
+  title: string;
+  place?: string;
+};
+
 export type Person = {
   id: string;
   firstName: string;
@@ -16,7 +25,12 @@ export type Person = {
   birthPlace?: string;
   occupation?: string;
   bio?: string;
+  /** The portrait used on the tree. */
   photoUri?: string;
+  /** Everything else in their album, portrait excluded. */
+  photos?: string[];
+  /** Hand-recorded moments; birth and death are derived, not stored here. */
+  events?: LifeEvent[];
   /** Biological or adoptive parents. Zero, one or two entries in practice. */
   parentIds: string[];
   /** Symmetric: if A lists B, B lists A. Maintained by the store. */
