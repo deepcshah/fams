@@ -81,10 +81,13 @@ export function yearsBetween(from?: string | null, to?: PartialDate | string | n
 }
 
 export function ageOf(
-  person: { birthDate?: string; deathDate?: string },
+  person: { birthDate?: string; deathDate?: string; deceased?: boolean },
   now = new Date(),
 ): { years: number; atDeath: boolean } | null {
   if (!person.birthDate) return null;
+  // Known to have died but no date recorded: counting to today would quietly
+  // report a living age for someone who is not.
+  if (person.deceased && !person.deathDate) return null;
   const years = yearsBetween(person.birthDate, person.deathDate ?? null, now);
   if (years === null) return null;
   return { years, atDeath: Boolean(person.deathDate) };

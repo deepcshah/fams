@@ -50,7 +50,7 @@ export function buildTimeline(person: Person): TimelineEntry[] {
     });
   }
 
-  if (person.deathDate) {
+  if (person.deathDate || person.deceased) {
     entries.push({
       id: `${person.id}:death`,
       date: person.deathDate,

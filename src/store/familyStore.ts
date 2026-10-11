@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { createSampleTree } from '@/data/sampleFamily';
+import { parseGedcom } from '@/lib/gedcom';
 import { createId } from '@/lib/id';
 import { ancestorsOf, descendantsOf } from '@/lib/relations';
 import { unionKey, type FamilyTree, type Person, type PersonDraft, type Union, type UnionStatus } from '@/types';
@@ -59,7 +60,7 @@ type Actions = {
   updateSettings: (patch: Partial<Settings>) => void;
 
   exportPayload: () => ExportPayload;
-  importTree: (raw: string) => { ok: true; count: number } | { ok: false; error: string };
+  importTree: (raw: string) => { ok: true; count: number; note?: string } | { ok: false; error: string };
   loadSample: () => void;
   clearTree: () => void;
 };
@@ -81,6 +82,7 @@ function emptyPerson(draft: Partial<PersonDraft>, now: number): Person {
     gender: draft.gender ?? 'other',
     birthDate: draft.birthDate || undefined,
     deathDate: draft.deathDate || undefined,
+    deceased: draft.deceased ?? Boolean(draft.deathDate),
     birthPlace: draft.birthPlace?.trim() || undefined,
     occupation: draft.occupation?.trim() || undefined,
     bio: draft.bio?.trim() || undefined,
@@ -121,6 +123,7 @@ function sanitiseTree(input: unknown): FamilyTree | null {
       gender: raw.gender === 'female' || raw.gender === 'male' ? raw.gender : 'other',
       birthDate: raw.birthDate,
       deathDate: raw.deathDate,
+      deceased: typeof raw.deceased === 'boolean' ? raw.deceased : Boolean(raw.deathDate),
       birthPlace: raw.birthPlace,
       occupation: raw.occupation,
       bio: raw.bio,
@@ -377,11 +380,33 @@ export const useFamilyStore = create<FamilyStore>()(
       }),
 
       importTree: (raw) => {
+        // GEDCOM is what every genealogy service exports, so sniff for it
+        // before assuming the file is one of our own JSON backups.
+        if (/^\s*0\s+HEAD/m.test(raw.replace(/^\uFEFF/, ''))) {
+          const result = parseGedcom(raw);
+          if (!result.ok) return { ok: false, error: result.error };
+          const { summary } = result;
+          set({ tree: result.tree, collapsedUnitIds: [], lineageId: undefined });
+          const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+          const parts = [plural(summary.people, 'person', 'people')];
+          if (summary.couples > 0) parts.push(plural(summary.couples, 'couple', 'couples'));
+          if (summary.events > 0) parts.push(plural(summary.events, 'moment', 'moments'));
+          const incomplete =
+            summary.warnings.length > 0
+              ? ` ${plural(summary.warnings.length, 'record was', 'records were')} incomplete.`
+              : '';
+          return {
+            ok: true,
+            count: summary.people,
+            note: `Imported ${parts.join(', ')}${summary.source ? ` from ${summary.source}` : ''}.${incomplete}`,
+          };
+        }
+
         let parsed: unknown;
         try {
           parsed = JSON.parse(raw);
         } catch {
-          return { ok: false, error: 'That file is not valid JSON.' };
+          return { ok: false, error: 'That file is neither a GEDCOM export nor valid JSON.' };
         }
         const container = parsed as { tree?: unknown };
         const tree = sanitiseTree(container?.tree ?? parsed);

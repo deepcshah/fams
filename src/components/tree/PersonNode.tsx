@@ -36,7 +36,7 @@ function PersonNodeBase({
   onLongPress,
 }: PersonNodeProps) {
   const theme = useTheme();
-  const years = showLifespans ? lifespan(person.birthDate, person.deathDate) : '';
+  const years = showLifespans ? lifespan(person.birthDate, person.deathDate, person.deceased) : '';
   const hasPhoto = Boolean(person.photoUri);
 
   return (

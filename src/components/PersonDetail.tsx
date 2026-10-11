@@ -143,8 +143,9 @@ export function PersonDetail({
   const timeline = useMemo(() => buildTimeline(person), [person]);
   const gallery = useMemo(() => galleryOf(person), [person]);
 
-  const dateLine = person.deathDate
-    ? `${formatYear(person.birthDate) || '?'} – ${formatYear(person.deathDate)}`
+  const deceased = person.deceased || Boolean(person.deathDate);
+  const dateLine = deceased
+    ? `${formatYear(person.birthDate) || '?'} – ${formatYear(person.deathDate) || '?'}`
     : dotted(person.birthDate);
 
   return (

@@ -23,7 +23,7 @@ export function PersonListItem({
   onPress?: () => void;
 }) {
   const theme = useTheme();
-  const years = lifespan(person.birthDate, person.deathDate);
+  const years = lifespan(person.birthDate, person.deathDate, person.deceased);
   const detail = subtitle ?? [years, person.birthPlace].filter(Boolean).join(' · ');
 
   return (

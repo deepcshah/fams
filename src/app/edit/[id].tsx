@@ -69,7 +69,7 @@ export default function EditPersonScreen() {
   const [gender, setGender] = useState<Gender>(existing?.gender ?? 'other');
   const [birthDate, setBirthDate] = useState(existing?.birthDate ?? '');
   const [deathDate, setDeathDate] = useState(existing?.deathDate ?? '');
-  const [deceased, setDeceased] = useState(Boolean(existing?.deathDate));
+  const [deceased, setDeceased] = useState(existing?.deceased ?? Boolean(existing?.deathDate));
   const [birthPlace, setBirthPlace] = useState(existing?.birthPlace ?? '');
   const [occupation, setOccupation] = useState(existing?.occupation ?? '');
   const [bio, setBio] = useState(existing?.bio ?? '');
@@ -127,6 +127,7 @@ export default function EditPersonScreen() {
       gender,
       birthDate: birthDate ? normalizeDateInput(birthDate) : undefined,
       deathDate: deceased && deathDate ? normalizeDateInput(deathDate) : undefined,
+      deceased,
       birthPlace: birthPlace.trim() || undefined,
       occupation: occupation.trim() || undefined,
       bio: bio.trim() || undefined,

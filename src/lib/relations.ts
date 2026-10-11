@@ -291,7 +291,7 @@ export function computeStats(
   ageFor: (person: Person) => number | null,
 ): TreeStats {
   const all = Object.values(people);
-  const deceased = all.filter((p) => Boolean(p.deathDate));
+  const deceased = all.filter((p) => p.deceased || Boolean(p.deathDate));
   const childIndex = buildChildIndex(people);
 
   const surnameCounts = new Map<string, number>();
@@ -314,7 +314,7 @@ export function computeStats(
   for (const person of all) {
     const age = ageFor(person);
     if (age === null) continue;
-    if (person.deathDate) {
+    if (person.deathDate || person.deceased) {
       if (!longestLife || age > longestLife.age) longestLife = { person, age };
     } else if (!oldestLiving || age > oldestLiving.age) {
       oldestLiving = { person, age };

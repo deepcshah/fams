@@ -54,7 +54,7 @@ export default function SettingsScreen() {
       return;
     }
     const result = importTree(picked.text);
-    setStatus(result.ok ? `Imported ${result.count} people.` : result.error);
+    setStatus(result.ok ? (result.note ?? `Imported ${result.count} people.`) : result.error);
     if (result.ok) setName(useFamilyStore.getState().tree.name);
     setBusy(false);
   }
@@ -134,7 +134,7 @@ export default function SettingsScreen() {
         <Divider inset={theme.space.lg} />
         <SettingRow
           title="Import tree"
-          subtitle="Replace this tree with a previously exported file"
+          subtitle="A GEDCOM (.ged) from Geni, Ancestry or MyHeritage, or a Fams export"
           leading={<Icon name="upload" size={20} color={theme.colors.textMuted} />}
           right={<Button label="Import" size="sm" variant="secondary" disabled={busy} onPress={handleImport} />}
         />

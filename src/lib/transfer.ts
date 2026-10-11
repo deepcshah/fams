@@ -47,11 +47,12 @@ export async function exportTreeJson(json: string, treeName: string): Promise<Tr
   }
 }
 
-/** Opens the system file picker and returns the file's text contents. */
+/** Opens the system file picker and returns the file's text contents (JSON or GEDCOM). */
 export async function pickTreeJson(): Promise<{ ok: true; text: string } | { ok: false; message: string }> {
   try {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/json', 'text/plain', '*/*'],
+      // GEDCOM has no registered MIME type and arrives as anything at all.
+      type: ['application/json', 'application/x-gedcom', 'text/plain', '*/*'],
       copyToCacheDirectory: true,
       multiple: false,
     });

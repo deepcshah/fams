@@ -22,6 +22,8 @@ export type Person = {
   /** Partial ISO dates are allowed: "1948", "1948-03", "1948-03-11". */
   birthDate?: string;
   deathDate?: string;
+  /** True when someone is known to have died but the date is not recorded. */
+  deceased?: boolean;
   birthPlace?: string;
   occupation?: string;
   bio?: string;

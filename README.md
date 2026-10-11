@@ -51,6 +51,11 @@ their photographs, places and moments strewn around a portrait.
 - **Abstract place tiles.** Real cartography needs a tile server and a key; what
   the eye wants is "somewhere on a coast", so each place generates its own
   coastline deterministically from its name.
+- **Import from anywhere.** Settings takes a GEDCOM (`.ged`) export from Geni,
+  Ancestry, MyHeritage or FamilySearch, as well as Fams' own JSON. Names, dates,
+  places, occupations, notes, marriages, divorces and life events all come
+  across; records that reference somebody missing from the file are reported
+  rather than dropped silently.
 - **Your data stays yours.** Everything is stored on the device. Export is plain
   JSON, and import accepts it back.
 
@@ -89,6 +94,7 @@ src/
   lib/
     layout.ts        the tree layout engine
     scatter.ts       the life-canvas scatter engine
+    gedcom.ts        GEDCOM 5.5.1 reader
     story.ts         timelines, albums and places derived from a person
     relations.ts     derived family relationships and kinship naming
     dates.ts         partial-date parsing, ages, lifespans
@@ -127,6 +133,16 @@ spiral at growing radii and the first slot that collides with nothing wins, so
 the result looks strewn across a table but never overlaps. Positions are seeded
 from each card's id, which means the same life always lays out the same way —
 the arrangement becomes something you can remember your way around.
+
+### Reading GEDCOM
+
+`src/lib/gedcom.ts` turns the flat `LEVEL [@XREF@] TAG [VALUE]` grammar into a
+node tree and maps it onto our model. The awkward parts are the ones real
+exports are full of: dates that are qualified rather than known (`ABT 1904`,
+`BET 1890 AND 1895`) and have to degrade into partial dates; a `DEAT` record
+with no date, which means somebody died but we do not know when; maiden names
+that live in a second `NAME` record tagged `birth`; notes split across `CONC`
+and `CONT` lines; and families that point at people the export left out.
 
 ### Data model
 
