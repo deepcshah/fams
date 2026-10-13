@@ -7,6 +7,7 @@ import { detailPanelWidth, useTheme } from '@/theme';
 
 import { IconButton } from './Button';
 import { PersonDetail } from './PersonDetail';
+import { PersonQuickEdit } from './PersonQuickEdit';
 import { shadow } from './Surface';
 
 /**
@@ -21,6 +22,9 @@ export function PersonDetailSurface({
   onAddRelative,
   onOpenCanvas,
   topInset = 0,
+  building = false,
+  onAddRelation,
+  onRemovePerson,
 }: {
   personId?: string;
   onClose: () => void;
@@ -28,6 +32,10 @@ export function PersonDetailSurface({
   onAddRelative: (id: string) => void;
   onOpenCanvas?: (id: string) => void;
   topInset?: number;
+  /** Build mode swaps the panel's contents without moving the panel. */
+  building?: boolean;
+  onAddRelation?: (id: string, relation: 'parent' | 'partner' | 'child' | 'sibling') => void;
+  onRemovePerson?: (id: string) => void;
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -35,7 +43,14 @@ export function PersonDetailSurface({
 
   if (!person) return null;
 
-  const body = (
+  const body = building ? (
+    <PersonQuickEdit
+      person={person}
+      onGoToPerson={onGoToPerson}
+      onAddRelative={(id, relation) => onAddRelation?.(id, relation)}
+      onRemove={(id) => onRemovePerson?.(id)}
+    />
+  ) : (
     <PersonDetail
       person={person}
       onGoToPerson={onGoToPerson}
@@ -66,8 +81,8 @@ export function PersonDetailSurface({
             width: detailPanelWidth,
             borderRadius: theme.radius.lg,
             backgroundColor: theme.colors.surface,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
+            borderWidth: building ? 1.5 : 1,
+            borderColor: building ? theme.colors.accent : theme.colors.border,
             overflow: 'hidden',
           },
           shadow(theme.colors.shadow, 3),

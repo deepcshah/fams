@@ -188,7 +188,8 @@ export function PersonDetail({
         {onOpenCanvas ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Open the life canvas"
+            accessibilityLabel="Life canvas"
+            accessibilityHint="Open this person's photographs, places and moments"
             onPress={() => onOpenCanvas(person.id)}
             style={({ pressed }) => ({
               flexDirection: 'row',

@@ -9,7 +9,7 @@ import { NODE_H, ROW_GAP, ROW_H, type TreeLayout } from '@/lib/layout';
 import { useTheme } from '@/theme';
 import type { Person, UnionStatus } from '@/types';
 
-import { PersonNode } from './PersonNode';
+import { PersonNode, type AddDirection } from './PersonNode';
 
 export const CANVAS_PADDING = 140;
 /** Below this the names stop being readable, so we frame a person instead. */
@@ -31,6 +31,10 @@ export type TreeCanvasProps = {
   onSelect: (personId: string) => void;
   onLongPressPerson: (personId: string) => void;
   onToggleCollapse: (unitId: string) => void;
+  /** Build mode: cards wobble and carry their own editing affordances. */
+  building?: boolean;
+  onRemovePerson?: (personId: string) => void;
+  onAddRelative?: (personId: string, direction: AddDirection) => void;
   onScaleChange?: (scale: number) => void;
   /** Screen edges covered by floating chrome, kept clear when fitting. */
   fitInsets?: Insets;
@@ -54,6 +58,9 @@ export function TreeCanvas({
   onSelect,
   onLongPressPerson,
   onToggleCollapse,
+  building = false,
+  onRemovePerson,
+  onAddRelative,
   onScaleChange,
   fitInsets,
   initialFocusId,
@@ -172,13 +179,18 @@ export function TreeCanvas({
               isHome={homeId === node.personId}
               dimmed={hasHighlight && !highlightIds!.has(node.personId)}
               showLifespans={showLifespans}
+              building={building}
+              canAddParent={person.parentIds.length < 2}
               onPress={onSelect}
               onLongPress={onLongPressPerson}
+              onRemove={(id) => onRemovePerson?.(id)}
+              onAdd={(id, direction) => onAddRelative?.(id, direction)}
             />
           );
         })}
 
         {layout.units.map((unit) => {
+          if (building) return null;
           if (!unit.collapsed && unit.childIds.length === 0) return null;
           const badgeSize = 22;
           return (
@@ -220,3 +232,5 @@ export function TreeCanvas({
     </View>
   );
 }
+
+export type { AddDirection };

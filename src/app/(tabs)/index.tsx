@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 
 import { AddRelativeSheet } from '@/components/AddRelativeSheet';
 import { Button, IconButton } from '@/components/Button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Icon } from '@/components/Icon';
 import { PersonDetailSurface } from '@/components/PersonDetailSurface';
 import { PersonPicker } from '@/components/PersonPicker';
@@ -30,12 +31,16 @@ export default function TreeScreen() {
   const toggleCollapsed = useFamilyStore((state) => state.toggleCollapsed);
   const expandAll = useFamilyStore((state) => state.expandAll);
   const loadSample = useFamilyStore((state) => state.loadSample);
+  const deletePerson = useFamilyStore((state) => state.deletePerson);
+  const addRelative = useFamilyStore((state) => state.addRelative);
 
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [detailId, setDetailId] = useState<string | undefined>(undefined);
   const [addForId, setAddForId] = useState<string | undefined>(undefined);
   const [searchOpen, setSearchOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [building, setBuilding] = useState(false);
+  const [removeId, setRemoveId] = useState<string | undefined>(undefined);
 
   const people = tree.people;
   const allPeople = useMemo(() => Object.values(people), [people]);
@@ -56,6 +61,27 @@ export default function TreeScreen() {
     setSelectedId(personId);
     setDetailId(personId);
   }, []);
+
+  /**
+   * In build mode a new relative is created on the spot and selected, so the
+   * tree grows under your finger instead of sending you to a form.
+   */
+  const addRelation = useCallback(
+    (anchorId: string, relation: 'parent' | 'partner' | 'child' | 'sibling') => {
+      const anchor = people[anchorId];
+      if (!anchor) return;
+      const coParent =
+        relation === 'child' && anchor.partnerIds.length === 1 ? anchor.partnerIds[0] : undefined;
+      const newId = addRelative(anchorId, relation, { firstName: '', lastName: anchor.lastName }, {
+        otherParentId: coParent,
+      });
+      if (newId) {
+        setSelectedId(newId);
+        setDetailId(newId);
+      }
+    },
+    [addRelative, people],
+  );
 
   const goToPerson = useCallback((personId: string) => {
     setSelectedId(personId);
@@ -101,6 +127,9 @@ export default function TreeScreen() {
         onSelect={handleSelect}
         onLongPressPerson={handleSelect}
         onToggleCollapse={toggleCollapsed}
+        building={building}
+        onRemovePerson={setRemoveId}
+        onAddRelative={addRelation}
         onScaleChange={setZoom}
         initialFocusId={tree.homeId}
         fitInsets={{
@@ -182,12 +211,47 @@ export default function TreeScreen() {
           </View>
         </View>
 
-        <IconButton
-          icon="search"
-          label="Search people"
-          onPress={() => setSearchOpen(true)}
-          style={shadow(theme.colors.shadow, 1)}
-        />
+        <View style={{ flexDirection: 'row', gap: theme.space.sm }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={building ? 'Done' : 'Build'}
+            accessibilityHint={building ? 'Stop editing the tree' : 'Edit the tree in place'}
+            accessibilityState={{ selected: building }}
+            onPress={() => {
+              setBuilding((current) => !current);
+              if (building) setDetailId(undefined);
+            }}
+            style={({ pressed }) => [
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                height: 40,
+                paddingHorizontal: theme.space.lg,
+                borderRadius: theme.radius.pill,
+                backgroundColor: building ? theme.colors.accent : theme.colors.surface,
+                borderWidth: 1,
+                borderColor: building ? theme.colors.accent : theme.colors.border,
+                opacity: pressed ? 0.8 : 1,
+              },
+              shadow(theme.colors.shadow, 1),
+            ]}>
+            <Icon
+              name={building ? 'check' : 'pencil'}
+              size={15}
+              color={building ? theme.colors.accentText : theme.colors.text}
+            />
+            <AppText variant="label" style={{ color: building ? theme.colors.accentText : theme.colors.text }}>
+              {building ? 'Done' : 'Build'}
+            </AppText>
+          </Pressable>
+          <IconButton
+            icon="search"
+            label="Search people"
+            onPress={() => setSearchOpen(true)}
+            style={shadow(theme.colors.shadow, 1)}
+          />
+        </View>
       </View>
 
       {/* Zoom register, bottom left */}
@@ -216,7 +280,8 @@ export default function TreeScreen() {
         <IconButton icon="plus" label="Zoom in" size={28} variant="ghost" onPress={() => canvasRef.current?.zoomBy(1.3)} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Fit the tree on screen"
+          accessibilityLabel="Fit"
+          accessibilityHint="Frame the whole tree on screen"
           onPress={() => canvasRef.current?.fit()}
           style={{ paddingHorizontal: theme.space.md, height: 28, justifyContent: 'center' }}>
           <AppText variant="label" tone="muted">
@@ -258,6 +323,9 @@ export default function TreeScreen() {
       <PersonDetailSurface
         personId={detailId}
         topInset={insets.top + 56}
+        building={building}
+        onAddRelation={addRelation}
+        onRemovePerson={setRemoveId}
         onClose={() => setDetailId(undefined)}
         onGoToPerson={goToPerson}
         onAddRelative={(id) => {
@@ -271,6 +339,23 @@ export default function TreeScreen() {
       />
 
       <AddRelativeSheet anchorId={addForId} visible={Boolean(addForId)} onClose={() => setAddForId(undefined)} />
+
+      <ConfirmDialog
+        visible={Boolean(removeId)}
+        title={removeId && people[removeId] ? `Remove ${fullName(people[removeId])}?` : 'Remove this person?'}
+        message="They will be taken out of the tree and unlinked from every relative. This cannot be undone."
+        confirmLabel="Remove"
+        destructive
+        onCancel={() => setRemoveId(undefined)}
+        onConfirm={() => {
+          if (removeId) {
+            deletePerson(removeId);
+            if (selectedId === removeId) setSelectedId(undefined);
+            if (detailId === removeId) setDetailId(undefined);
+          }
+          setRemoveId(undefined);
+        }}
+      />
 
       <PersonPicker
         visible={searchOpen}

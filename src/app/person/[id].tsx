@@ -76,7 +76,8 @@ export default function PersonScreen() {
         }}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back to the family tree"
+          accessibilityLabel="Family tree"
+          accessibilityHint="Go back to the family tree"
           onPress={() => router.back()}
           style={({ pressed }) => ({
             flexDirection: 'row',

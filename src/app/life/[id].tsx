@@ -269,7 +269,8 @@ export default function LifeCanvasScreen() {
       <View style={{ position: 'absolute', top: insets.top + theme.space.md, left: theme.space.lg }}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back to the family tree"
+          accessibilityLabel="Family tree"
+          accessibilityHint="Go back to the family tree"
           onPress={() => router.back()}
           style={({ pressed }) => [
             {
@@ -317,7 +318,8 @@ export default function LifeCanvasScreen() {
         <IconButton icon="plus" label="Zoom in" size={28} variant="ghost" onPress={() => viewportRef.current?.zoomBy(1.3)} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Fit the canvas on screen"
+          accessibilityLabel="Fit"
+          accessibilityHint="Frame the whole canvas on screen"
           onPress={() => viewportRef.current?.fit()}
           style={{ paddingHorizontal: theme.space.md, height: 28, justifyContent: 'center' }}>
           <AppText variant="label" tone="muted">
