@@ -1,1 +1,199 @@
-# fams
+# Fams
+
+A family tree app for web, iOS and Android, built with Expo and React Native.
+
+Most family tree software is a database with a diagram bolted on. Fams starts
+from the diagram, and treats the archive as the point: photographs are the
+cards, names and dates are set in letterspaced monospace, and the only colour
+on the page is the one in the pictures.
+
+There are two canvases. The tree answers **who** — generations, couples,
+branches you can collapse. A person's life canvas answers **what happened** —
+their photographs, places and moments strewn around a portrait.
+
+<p align="center">
+  <img src="docs/screenshot-tree.png" alt="The family tree canvas" width="760">
+</p>
+<p align="center">
+  <img src="docs/screenshot-life.png" alt="A person's life canvas" width="376">
+  <img src="docs/screenshot-panel.png" alt="The person detail panel" width="376">
+</p>
+<p align="center">
+  <img src="docs/screenshot-dark.png" alt="The tree in the dark theme" width="760">
+</p>
+
+## What it does
+
+- **Two canvases, one interaction.** Pan and pinch on device; scroll to pan and
+  ⌘/Ctrl-scroll to zoom on the web. Double-tap toggles overview and detail, and
+  a zoom register sits bottom-left with a Fit button.
+- **A life canvas per person.** Their photographs, the places they lived and the
+  moments they are remembered for, scattered around a portrait — stable,
+  overlap-free, and generated from the record rather than hand-arranged.
+- **A detail panel** that docks to the right on desktop and becomes a sheet on a
+  phone: family with relationships and dates, the album, and a timeline that
+  brackets recorded moments with birth and death.
+- **A layout that holds up.** Generation rows, couples drawn side by side,
+  parents centred over their children, and sibling bars staggered so two
+  families in the same row never merge into one line. It handles people who
+  marry in, second partnerships, and children of different unions.
+- **Collapse a branch** to fold away descendants, with a badge showing how many
+  people are hidden — counting only those with no other route onto the canvas.
+- **Focus one person's lineage** to cut a large tree down to their ancestors,
+  descendants, siblings and partners.
+- **Relationships in plain English.** Pick who you are and everybody else is
+  labelled from your point of view: "your grandmother", "your 2nd cousin once
+  removed", "your sister-in-law", "your step-father".
+- **Partial dates.** `1948`, `1948-03` and `1948-03-11` are all valid, and ages,
+  lifespans and birthday countdowns degrade to whatever precision is known.
+- **Insights.** Generation depth, couples, upcoming birthdays, longest life,
+  surname distribution.
+- **Abstract place tiles.** Real cartography needs a tile server and a key; what
+  the eye wants is "somewhere on a coast", so each place generates its own
+  coastline deterministically from its name.
+- **Import from anywhere.** Settings takes a GEDCOM (`.ged`) export from Geni,
+  Ancestry, MyHeritage or FamilySearch, as well as Fams' own JSON. Names, dates,
+  places, occupations, notes, marriages, divorces and life events all come
+  across; records that reference somebody missing from the file are reported
+  rather than dropped silently.
+- **Build mode.** A toggle turns the canvas into an editor in place: cards take
+  on the iOS home-screen wobble, each grows a remove badge, and the selected one
+  grows handles for a parent above, a partner beside and a child below. The
+  detail panel swaps its contents for a live editor without moving. Suppressed
+  under reduce-motion, where a dashed edge says the same thing.
+- **Accounts and sharing, optionally.** With Supabase configured you sign in
+  with an emailed code, publish a tree, and invite relatives to view or edit it.
+  Photographs go to a private bucket; everything syncs between devices.
+- **Your data stays yours.** With no backend configured nothing leaves the
+  device, and that is a fully supported way to run the app. Export is plain
+  JSON, and import accepts it back.
+
+## Running it
+
+```bash
+npm install
+npm start          # then press i, a or w
+```
+
+```bash
+npm run ios        # iOS simulator
+npm run android    # Android emulator
+npm run web        # browser
+npm run build:web  # static web build into dist/
+```
+
+Accounts, sharing and photo backup are optional. To turn them on, copy
+`.env.example` to `.env.local`, fill in a Supabase project URL and anon key, and
+run `supabase/schema.sql` once in that project's SQL editor. Leave it unset and
+the app is local-first and fully usable — every cloud affordance just hides
+itself.
+
+Checks:
+
+```bash
+npm run typecheck  # app and test sources
+npm run lint
+npm test           # layout, relations and date logic
+```
+
+## How it is put together
+
+```
+src/
+  app/               expo-router routes
+    (tabs)/          tree · people · insights · settings
+    person/[id]      profile
+    life/[id]        the life canvas
+    edit/[id]        create and edit ("new" creates)
+  components/        UI primitives, sheets, and the tree canvas
+  lib/
+    layout.ts        the tree layout engine
+    scatter.ts       the life-canvas scatter engine
+    gedcom.ts        GEDCOM 5.5.1 reader
+    story.ts         timelines, albums and places derived from a person
+    relations.ts     derived family relationships and kinship naming
+    dates.ts         partial-date parsing, ages, lifespans
+    transfer.ts      JSON import and export
+  lib/sync/          the backend adapter (Supabase), photo signing and cache
+  store/             zustand stores, persisted through AsyncStorage
+supabase/schema.sql  tables, row-level security and the photo bucket
+  theme/             design tokens and the theme provider
+tests/               node:test suites over the pure modules
+```
+
+### The layout engine
+
+`src/lib/layout.ts` is the heart of the app and is deliberately free of runtime
+imports so it can be tested and reasoned about on its own.
+
+1. **Generations.** Each person sits one row below their deepest parent, and
+   partners are pulled down to share a row. Both rules only ever increase a
+   generation, so the fixed-point loop terminates — including on malformed data
+   with a parent cycle.
+2. **Units.** Partners are grouped into a unit and drawn side by side. A person
+   joins the unit of the first partner who claims them, so everybody is placed
+   exactly once even when the graph is tangled.
+3. **Placement.** A Reingold–Tilford style post-order pass: children are laid
+   out first, the parents are centred over them, and when that would collide
+   with a sibling the whole child block is pushed right instead of overlapping.
+4. **Links.** Partner links, and rounded elbows from each couple down to each
+   child, with the horizontal bars staggered across three lanes per row.
+
+A family tree is a DAG rather than a tree — two parents per child, people who
+marry in — so the traversal tracks what has already been placed and gives any
+unreachable couple its own slot.
+
+### The scatter engine
+
+`src/lib/scatter.ts` arranges a life canvas. Cards are tried along a golden
+spiral at growing radii and the first slot that collides with nothing wins, so
+the result looks strewn across a table but never overlaps. Positions are seeded
+from each card's id, which means the same life always lays out the same way —
+the arrangement becomes something you can remember your way around.
+
+### Reading GEDCOM
+
+`src/lib/gedcom.ts` turns the flat `LEVEL [@XREF@] TAG [VALUE]` grammar into a
+node tree and maps it onto our model. The awkward parts are the ones real
+exports are full of: dates that are qualified rather than known (`ABT 1904`,
+`BET 1890 AND 1895`) and have to degrade into partial dates; a `DEAT` record
+with no date, which means somebody died but we do not know when; maiden names
+that live in a second `NAME` record tagged `birth`; notes split across `CONC`
+and `CONT` lines; and families that point at people the export left out.
+
+### Syncing
+
+The local store stays the source of truth for rendering; the server is a copy
+that catches up. `src/lib/merge.ts` resolves the two with last-write-wins per
+record, using each record's own `updatedAt`, and tombstones so a deletion is not
+quietly undone by a device that still holds the record. A record edited *after*
+it was deleted elsewhere comes back, which is almost always what somebody meant.
+
+It is deliberately not a CRDT. Concurrent edits to the same person lose the
+older one outright rather than merging field by field — an honest trade for
+this data, and a rule you can hold in your head.
+
+Everything the app needs from a backend sits behind one interface in
+`src/lib/sync/types.ts`. Supabase implements it; keeping the surface that narrow
+is what makes the choice reversible.
+
+### Data model
+
+A `Person` carries `parentIds` and `partnerIds`; unions (married, partners,
+divorced, …) are stored separately and keyed by the two partner ids. Everything
+else is derived, which keeps edits local: adding a child never has to rewrite a
+family record.
+
+### Design language
+
+Near-monochrome paper grey, a single muted sage for anything actionable, and
+IBM Plex Mono in letterspaced uppercase for every name, date and section label.
+Cards are the photograph itself; somebody with no photograph gets a pale card
+with their initials, so the gaps in an archive are visible rather than papered
+over. Connectors are unrounded hairlines, and generations are separated by
+stripes you feel more than see.
+
+## Built with
+
+Expo SDK 57 · React Native 0.86 · expo-router · react-native-reanimated ·
+react-native-gesture-handler · react-native-svg · zustand · IBM Plex Mono
