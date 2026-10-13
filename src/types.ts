@@ -50,6 +50,8 @@ export type Union = {
   status: UnionStatus;
   since?: string;
   until?: string;
+  /** Set on every write; sync resolves conflicts by comparing these. */
+  updatedAt?: number;
 };
 
 export type FamilyTree = {

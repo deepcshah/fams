@@ -3,12 +3,12 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
 
 import { Avatar } from '@/components/Avatar';
 import { Button, IconButton } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Icon } from '@/components/Icon';
+import { Photo } from '@/components/Photo';
 import { SegmentedControl, TextField } from '@/components/Field';
 import { Card, Divider, SectionHeader } from '@/components/Surface';
 import { AppText } from '@/components/Text';
@@ -341,7 +341,7 @@ export default function EditPersonScreen() {
               <View
                 key={uri}
                 style={{ width: '31.8%', aspectRatio: 1.18, borderRadius: theme.radius.sm, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                <Photo uri={uri} style={{ width: '100%', height: '100%' }} />
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Remove this photograph"

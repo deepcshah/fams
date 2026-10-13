@@ -56,7 +56,16 @@ their photographs, places and moments strewn around a portrait.
   places, occupations, notes, marriages, divorces and life events all come
   across; records that reference somebody missing from the file are reported
   rather than dropped silently.
-- **Your data stays yours.** Everything is stored on the device. Export is plain
+- **Build mode.** A toggle turns the canvas into an editor in place: cards take
+  on the iOS home-screen wobble, each grows a remove badge, and the selected one
+  grows handles for a parent above, a partner beside and a child below. The
+  detail panel swaps its contents for a live editor without moving. Suppressed
+  under reduce-motion, where a dashed edge says the same thing.
+- **Accounts and sharing, optionally.** With Supabase configured you sign in
+  with an emailed code, publish a tree, and invite relatives to view or edit it.
+  Photographs go to a private bucket; everything syncs between devices.
+- **Your data stays yours.** With no backend configured nothing leaves the
+  device, and that is a fully supported way to run the app. Export is plain
   JSON, and import accepts it back.
 
 ## Running it
@@ -72,6 +81,12 @@ npm run android    # Android emulator
 npm run web        # browser
 npm run build:web  # static web build into dist/
 ```
+
+Accounts, sharing and photo backup are optional. To turn them on, copy
+`.env.example` to `.env.local`, fill in a Supabase project URL and anon key, and
+run `supabase/schema.sql` once in that project's SQL editor. Leave it unset and
+the app is local-first and fully usable — every cloud affordance just hides
+itself.
 
 Checks:
 
@@ -99,7 +114,9 @@ src/
     relations.ts     derived family relationships and kinship naming
     dates.ts         partial-date parsing, ages, lifespans
     transfer.ts      JSON import and export
-  store/             zustand store, persisted through AsyncStorage
+  lib/sync/          the backend adapter (Supabase), photo signing and cache
+  store/             zustand stores, persisted through AsyncStorage
+supabase/schema.sql  tables, row-level security and the photo bucket
   theme/             design tokens and the theme provider
 tests/               node:test suites over the pure modules
 ```
@@ -143,6 +160,22 @@ exports are full of: dates that are qualified rather than known (`ABT 1904`,
 with no date, which means somebody died but we do not know when; maiden names
 that live in a second `NAME` record tagged `birth`; notes split across `CONC`
 and `CONT` lines; and families that point at people the export left out.
+
+### Syncing
+
+The local store stays the source of truth for rendering; the server is a copy
+that catches up. `src/lib/merge.ts` resolves the two with last-write-wins per
+record, using each record's own `updatedAt`, and tombstones so a deletion is not
+quietly undone by a device that still holds the record. A record edited *after*
+it was deleted elsewhere comes back, which is almost always what somebody meant.
+
+It is deliberately not a CRDT. Concurrent edits to the same person lose the
+older one outright rather than merging field by field — an honest trade for
+this data, and a rule you can hold in your head.
+
+Everything the app needs from a backend sits behind one interface in
+`src/lib/sync/types.ts`. Supabase implements it; keeping the surface that narrow
+is what makes the choice reversible.
 
 ### Data model
 

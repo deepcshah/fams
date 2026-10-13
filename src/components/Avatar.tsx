@@ -1,7 +1,7 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { Image } from 'expo-image';
 
 import { initialsOf } from '@/lib/relations';
+import { Photo } from './Photo';
 import { useTheme } from '@/theme';
 import type { Person } from '@/types';
 
@@ -43,12 +43,7 @@ export function Avatar({
         style,
       ]}>
       {hasPhoto ? (
-        <Image
-          source={{ uri: person!.photoUri }}
-          style={{ width: '100%', height: '100%' }}
-          contentFit="cover"
-          transition={140}
-        />
+        <Photo uri={person!.photoUri} style={{ width: '100%', height: '100%' }} transition={140} />
       ) : (
         <AppText
           variant="nameSM"

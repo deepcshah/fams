@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -9,6 +8,7 @@ import { Icon } from '@/components/Icon';
 import { Lightbox } from '@/components/Lightbox';
 import { PanZoom, type PanZoomHandle } from '@/components/PanZoom';
 import { PersonDetailSurface } from '@/components/PersonDetailSurface';
+import { Photo } from '@/components/Photo';
 import { PlaceTile } from '@/components/PlaceTile';
 import { EmptyState, shadow } from '@/components/Surface';
 import { AppText } from '@/components/Text';
@@ -170,7 +170,7 @@ export default function LifeCanvasScreen() {
               shadow(theme.colors.shadow, 2),
             ]}>
             {person.photoUri ? (
-              <Image source={{ uri: person.photoUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              <Photo uri={person.photoUri} style={{ width: '100%', height: '100%' }} />
             ) : (
               <AppText variant="nameXL" tone="faint" style={{ fontSize: 44, lineHeight: 52 }}>
                 {initialsOf(person)}
@@ -214,12 +214,7 @@ export default function LifeCanvasScreen() {
                   },
                   shadow(theme.colors.shadow, 1),
                 ]}>
-                <Image
-                  source={{ uri: card.uri }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit="cover"
-                  transition={160}
-                />
+                <Photo uri={card.uri} style={{ width: '100%', height: '100%' }} />
               </Pressable>
             );
           }

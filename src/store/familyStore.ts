@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { createSampleTree } from '@/data/sampleFamily';
 import { parseGedcom } from '@/lib/gedcom';
+import type { Tombstones } from '@/lib/merge';
 import { createId } from '@/lib/id';
 import { ancestorsOf, descendantsOf } from '@/lib/relations';
 import { unionKey, type FamilyTree, type Person, type PersonDraft, type Union, type UnionStatus } from '@/types';
@@ -30,6 +31,13 @@ type State = {
   collapsedUnitIds: string[];
   /** When set, the canvas shows only this person's lineage. */
   lineageId?: string;
+  /**
+   * Deletions, remembered. Without these a record removed here comes straight
+   * back from any device that still holds it.
+   */
+  tombstones: Tombstones;
+  /** When the tree's own fields last changed, for the same reason. */
+  treeUpdatedAt: number;
   hydrated: boolean;
 };
 
@@ -58,6 +66,9 @@ type Actions = {
   renameTree: (name: string) => void;
 
   updateSettings: (patch: Partial<Settings>) => void;
+
+  /** Replaces local state with the result of a merge against the server. */
+  applyMerged: (tree: FamilyTree, tombstones: Tombstones, treeUpdatedAt: number) => void;
 
   exportPayload: () => ExportPayload;
   importTree: (raw: string) => { ok: true; count: number; note?: string } | { ok: false; error: string };
@@ -160,6 +171,7 @@ function sanitiseTree(input: unknown): FamilyTree | null {
         status: (existing?.status as UnionStatus) ?? 'married',
         since: existing?.since,
         until: existing?.until,
+        updatedAt: typeof existing?.updatedAt === 'number' ? existing.updatedAt : now,
       };
     }
   }
@@ -176,6 +188,8 @@ export const useFamilyStore = create<FamilyStore>()(
       settings: defaultSettings,
       collapsedUnitIds: [],
       lineageId: undefined,
+      tombstones: {},
+      treeUpdatedAt: Date.now(),
       hydrated: false,
 
       addPerson: (draft) => {
@@ -212,7 +226,14 @@ export const useFamilyStore = create<FamilyStore>()(
             unions[key] = union;
           }
           const homeId = state.tree.homeId === id ? undefined : state.tree.homeId;
+          const now = Date.now();
+          const tombstones: Tombstones = { ...state.tombstones, [id]: now };
+          for (const key of Object.keys(state.tree.unions)) {
+            if (!unions[key]) tombstones[key] = now;
+          }
           return {
+            tombstones,
+            treeUpdatedAt: state.tree.homeId === id ? now : state.treeUpdatedAt,
             tree: { ...state.tree, people, unions, homeId },
             lineageId: state.lineageId === id ? undefined : state.lineageId,
           };
@@ -315,7 +336,7 @@ export const useFamilyStore = create<FamilyStore>()(
             ...tree,
             unions: {
               ...tree.unions,
-              [key]: { key, partnerIds: key.split('~') as [string, string], status },
+              [key]: { key, partnerIds: key.split('~') as [string, string], status, updatedAt: Date.now() },
             },
           };
           return { tree };
@@ -339,9 +360,10 @@ export const useFamilyStore = create<FamilyStore>()(
             partnerIds: personB.partnerIds.filter((id) => id !== a),
             updatedAt: now,
           });
+          const key = unionKey(a, b);
           const unions = { ...tree.unions };
-          delete unions[unionKey(a, b)];
-          return { tree: { ...tree, unions } };
+          delete unions[key];
+          return { tree: { ...tree, unions }, tombstones: { ...state.tombstones, [key]: now } };
         });
       },
 
@@ -351,12 +373,15 @@ export const useFamilyStore = create<FamilyStore>()(
           const existing = state.tree.unions[key];
           if (!existing) return state;
           return {
-            tree: { ...state.tree, unions: { ...state.tree.unions, [key]: { ...existing, status } } },
+            tree: {
+              ...state.tree,
+              unions: { ...state.tree.unions, [key]: { ...existing, status, updatedAt: Date.now() } },
+            },
           };
         });
       },
 
-      setHome: (id) => set((state) => ({ tree: { ...state.tree, homeId: id } })),
+      setHome: (id) => set((state) => ({ tree: { ...state.tree, homeId: id }, treeUpdatedAt: Date.now() })),
       setLineage: (id) => set({ lineageId: id }),
 
       toggleCollapsed: (unitId) =>
@@ -368,7 +393,10 @@ export const useFamilyStore = create<FamilyStore>()(
 
       expandAll: () => set({ collapsedUnitIds: [] }),
 
-      renameTree: (name) => set((state) => ({ tree: { ...state.tree, name: name.trim() || 'My Family' } })),
+      renameTree: (name) =>
+        set((state) => ({ tree: { ...state.tree, name: name.trim() || 'My Family' }, treeUpdatedAt: Date.now() })),
+
+      applyMerged: (tree, tombstones, treeUpdatedAt) => set({ tree, tombstones, treeUpdatedAt }),
 
       updateSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
 
@@ -386,7 +414,13 @@ export const useFamilyStore = create<FamilyStore>()(
           const result = parseGedcom(raw);
           if (!result.ok) return { ok: false, error: result.error };
           const { summary } = result;
-          set({ tree: result.tree, collapsedUnitIds: [], lineageId: undefined });
+          set({
+            tree: result.tree,
+            collapsedUnitIds: [],
+            lineageId: undefined,
+            tombstones: {},
+            treeUpdatedAt: Date.now(),
+          });
           const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
           const parts = [plural(summary.people, 'person', 'people')];
           if (summary.couples > 0) parts.push(plural(summary.couples, 'couple', 'couples'));
@@ -411,13 +445,13 @@ export const useFamilyStore = create<FamilyStore>()(
         const container = parsed as { tree?: unknown };
         const tree = sanitiseTree(container?.tree ?? parsed);
         if (!tree) return { ok: false, error: 'No people found in that file.' };
-        set({ tree, collapsedUnitIds: [], lineageId: undefined });
+        set({ tree, collapsedUnitIds: [], lineageId: undefined, tombstones: {}, treeUpdatedAt: Date.now() });
         return { ok: true, count: Object.keys(tree.people).length };
       },
 
       loadSample: () => {
         const tree = createSampleTree();
-        set({ tree, collapsedUnitIds: [], lineageId: undefined });
+        set({ tree, collapsedUnitIds: [], lineageId: undefined, tombstones: {}, treeUpdatedAt: Date.now() });
       },
 
       clearTree: () =>
@@ -425,6 +459,8 @@ export const useFamilyStore = create<FamilyStore>()(
           tree: { name: 'My Family', people: {}, unions: {}, homeId: undefined },
           collapsedUnitIds: [],
           lineageId: undefined,
+          tombstones: {},
+          treeUpdatedAt: Date.now(),
         }),
     }),
     {
@@ -435,6 +471,8 @@ export const useFamilyStore = create<FamilyStore>()(
         settings: state.settings,
         collapsedUnitIds: state.collapsedUnitIds,
         lineageId: state.lineageId,
+        tombstones: state.tombstones,
+        treeUpdatedAt: state.treeUpdatedAt,
       }),
     },
   ),

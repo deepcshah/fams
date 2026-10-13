@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { SegmentedControl, SettingRow, TextField, ToggleRow } from '@/components/Field';
 import { Icon } from '@/components/Icon';
 import { PersonPicker } from '@/components/PersonPicker';
+import { SyncPanel } from '@/components/SyncPanel';
 import { Card, Divider, SectionHeader } from '@/components/Surface';
 import { AppText } from '@/components/Text';
 import { fullName } from '@/lib/relations';
@@ -73,6 +74,9 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       <AppText variant="nameLG">Settings</AppText>
+
+      <SectionHeader title="Account & sync" />
+      <SyncPanel />
 
       <SectionHeader title="This tree" />
       <Card style={{ gap: theme.space.lg }}>

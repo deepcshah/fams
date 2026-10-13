@@ -1,12 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 
 import { formatDate, formatYear } from '@/lib/dates';
 import { childrenOf, fullName, kinshipLabel, parentsOf, partnersOf, siblingsOf } from '@/lib/relations';
 import { buildTimeline, galleryOf } from '@/lib/story';
 import { useFamilyStore } from '@/store/familyStore';
+import { Photo } from './Photo';
 import { useTheme } from '@/theme';
 import type { Person } from '@/types';
 
@@ -241,7 +241,7 @@ export function PersonDetail({
               accessibilityLabel={`Photo ${index + 1} of ${gallery.length}`}
               onPress={() => setLightbox(index)}
               style={{ width: '31.8%', aspectRatio: 1.18, borderRadius: theme.radius.xs, overflow: 'hidden' }}>
-              <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={140} />
+              <Photo uri={uri} style={{ width: '100%', height: '100%' }} transition={140} />
             </Pressable>
           ))}
         </View>

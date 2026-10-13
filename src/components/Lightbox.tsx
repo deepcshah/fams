@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Modal, Pressable, View, useWindowDimensions } from 'react-native';
-import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Photo } from './Photo';
 import { useTheme } from '@/theme';
 
 import { IconButton } from './Button';
@@ -55,15 +55,14 @@ export function Lightbox({
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
         />
 
-        <Image
-          source={{ uri: photos[safeIndex] }}
+        <Photo
+          uri={photos[safeIndex]}
           style={{
             width: width - 120,
             height: height - insets.top - insets.bottom - 150,
             alignSelf: 'center',
           }}
           contentFit="contain"
-          transition={160}
         />
 
         <View style={{ position: 'absolute', top: insets.top + 12, right: 16 }}>

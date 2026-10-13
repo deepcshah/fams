@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 
 import { Icon } from '@/components/Icon';
@@ -8,6 +7,7 @@ import { AppText } from '@/components/Text';
 import { lifespan } from '@/lib/dates';
 import { CAPTION_H, PORTRAIT_H, PORTRAIT_W, type LayoutNode } from '@/lib/layout';
 import { fullName, initialsOf } from '@/lib/relations';
+import { Photo } from '@/components/Photo';
 import { useTheme } from '@/theme';
 import type { Person } from '@/types';
 
@@ -139,12 +139,7 @@ function PersonNodeBase({
             elevation: hasPhoto ? 3 : 0,
           }}>
           {hasPhoto ? (
-            <Image
-              source={{ uri: person.photoUri }}
-              style={{ width: '100%', height: '100%' }}
-              contentFit="cover"
-              transition={160}
-            />
+            <Photo uri={person.photoUri} style={{ width: '100%', height: '100%' }} />
           ) : (
             <AppText variant="nameLG" tone="faint" style={{ letterSpacing: 2 }}>
               {initialsOf(person)}

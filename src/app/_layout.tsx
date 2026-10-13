@@ -6,6 +6,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { SyncBridge } from '@/components/SyncBridge';
 import { useFamilyStore } from '@/store/familyStore';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 
@@ -27,6 +28,7 @@ function Navigator() {
 
   return (
     <>
+      <SyncBridge />
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -37,6 +39,7 @@ function Navigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="person/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="life/[id]" options={{ presentation: 'card', animation: 'fade' }} />
+        <Stack.Screen name="share/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="edit/[id]" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
     </>
